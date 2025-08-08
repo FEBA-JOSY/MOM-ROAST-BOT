@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RoastO'Bot Chat — Mom, Granny & Friend Modes</title>
+  <style>
+    :root {
+      --bg: #f0ece6;
+      --primary-mom: #075e54;
+      --primary-granny: #8b4513;
+      --primary-friend: #2a9df4;
+      --user: #dcf8c6;
+      --bot: #fff;
+    }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, Arial, sans-serif;
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chat-container {
+      width: 100%;
+      max-width: 420px;
+      height: 88vh;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(10, 20, 30, 0.15);
+    }
+    .header {
+      color: #fff;
+      padding: 14px;
+      text-align: center;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .header span {
+      flex-grow: 1;
+      user-select: none;
+    }
+    select#modeSelector {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: linear-gradient(180deg, rgba(7, 94, 84, 0.02), transparent);
+    }
+    .msg {
+      max-width: 78%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .user {
+      align-self: flex-end;
+      background: var(--user);
+    }
+    .bot {
+      align-self: flex-start;
+      background: var(--bot);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .meta {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .input-area {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+      gap: 8px;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      outline: none;
+    }
+    .input-area button {
+      background: var(--primary-mom);
+      color: #fff;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    /* Different colors for modes */
+    .mode-mom .header {
+      background: var(--primary-mom);
+    }
+    .mode-mom .input-area button {
+      background: var(--primary-mom);
+    }
+    .mode-granny .header {
+      background: var(--primary-granny);
+    }
+    .mode-granny .input-area button {
+      background: var(--primary-granny);
+    }
+    .mode-friend .header {
+      background: var(--primary-friend);
+    }
+    .mode-friend .input-area button {
+      background: var(--primary-friend);
+    }
+    .hint {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      padding: 8px;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container mode-mom" role="application" aria-live="polite" aria-label="RoastO'Bot Chat">
+    <div class="header">
+      <span id="headerTitle">RoastO'Bot — Mom Mode</span>
+      <select id="modeSelector" aria-label="Select chat mode">
+        <option value="mom" selected>Mom</option>
+        <option value="granny">Granny</option>
+        <option value="friend">Friend</option>
+      </select>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="hint">
+      Try: "hi", "I failed in my exam", "I have an exam tomorrow", "I am hungry", "I am tired", "I need your help", "hairfall"
+    </div>
+    <div class="input-area">
+      <input id="input" placeholder="Type message..." aria-label="Message input" autocomplete="off" />
+      <button id="send" aria-label="Send message">Send</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const messages = document.getElementById('messages');
+  const input = document.getElementById('input');
+  const send = document.getElementById('send');
+  const modeSelector = document.getElementById('modeSelector');
+  const chatContainer = document.querySelector('.chat-container');
+  const headerTitle = document.getElementById('headerTitle');
+
+  // Data for each mode
+  const roastData = {
+    mom: [
+      // Greetings
+      { keys:['hi','hello','hey','greetings','good morning','good evening','good night'], replies:[
+        "Oh, you again? Even the calendar wasn't ready for this drama.",
+        "Aiyo! There you are — did you come for snacks or trouble?",
+        "Mom says: 'If you spent half the time studying, you’d be a genius!'",
+        "Hello dear... your timing is as good as cold tea."
+      ]},
+      { keys:['how are you','how r u','how are u','how ru','how you'], replies:[
+        "I'm fine — better than your last exam score!",
+        "Surviving. You? Still alive after last week's mess?",
+        "I'm doing great — more than I can say about your room."
+      ]},
+      { keys:['i failed','i failed in my exam','failed in my exam','failed exam','i failed my exam','failed'], replies:[
+        "I knew this was coming — your mobile and Netflix did a 2-person job.",
+        "Of course you failed. Olympic-level laziness and zero revision — congratulations.",
+        "I told you so! When will you stop giving your phone all your study time?",
+        "This result? Not a surprise. Laziness had a long-term relationship with you."
+      ]},
+      { keys:['i have an exam tomorrow','exam tomorrow','test tomorrow','tomorrow exam'], replies:[
+        "You got this! Just focus tonight and ace it.",
+        "Stay calm, revise smart, and success will follow.",
+        "Exam tomorrow? Time to shine, show them your best!",
+        "Believe in yourself — you’re more prepared than you think."
+      ]},
+      { keys:['i am hungry','im hungry','i.m hungry','ayinu','ayinu njan enthu venam','i am very hungry'], replies:[
+        "Ayinu? Njan enthu venam? — Eat something quick, stop staring at the fridge like a statue.",
+        "You always hungry! Open the fridge and cook something — I am not your 24/7 hotel.",
+        "Hungry again? You eat like a bird when it's time to study and like an elephant when it's snack time."
+      ]},
+      { keys:['sahichoo','sahichu','sahicho'], replies:[
+        "Sahichoo? Sahichu alle? A real miracle!",
+        "Sahichoo — wow, did you finally do something useful?",
+        "You? Sahichoo? Let me check the calendar — it's either a holiday or an illusion."
+      ]},
+      { keys:['hairfall','hair fall','hairloss','hair loss','i have hairfall'], replies:[
+        "Hairfall? That's because you are too stressed and not taking care — and maybe a little because you stay up scrolling.",
+        "Old? No, just too much worry — and maybe your shampoo choices.",
+        "Don't worry, eat well and sleep — and stop pulling your hair out over small things."
+      ]},
+      { keys:['i am tired','im tired','tired','exhausted','sleepy'], replies:[
+        "Tired? From what — sitting? You need to move a bit, not complain.",
+        "Rest, then get back. Complaining won't finish your tasks.",
+        "If naps were work, you'd be CEO. Take a short rest and then push — you can do it."
+      ]},
+      { keys:['i need your help','help me','please help','can you help','need help'], replies:[
+        "Okay, let's fix this. Tell me the problem — no drama, only solutions.",
+        "Motivation mode ON: Small steps now, big wins later. I'll guide you — start with one task.",
+        "You can do it. I'll push you — but you must do the work. No shortcuts."
+      ]},
+      { keys:['mobile','phone','whatsapp','youtube','instagram','social','scroll'], replies:[
+        "That phone is glued to your hand — give it a timeout.",
+        "If scrolling was studying, you'd be a genius already.",
+        "Phones are for calls, not for stealing your future."
+      ]},
+      { keys:['game','gaming','pubg','fortnite','freefire','minecraft'], replies:[
+        "If life had respawns, you'd still be respawning in the tutorial.",
+        "Games won't pay your bills — try leveling up in real life.",
+        "Play less, do more. Your future isn't a high score."
+      ]},
+      { keys:[], replies:[
+        "I told you so. Start now or stop complaining later.",
+        "You have potential — stop hiding it under excuses.",
+        "Go do something useful; come back with results, not reasons."
+      ]}
+    ],
+
+    granny: [
+      { keys:['hi','hello','hey','greetings','good morning','good evening','good night'], replies:[
+        "Oh, you again? Even the calendar wasn't ready for this drama.",
+        "Aiyo! There you are — did you come for snacks or trouble?",
+        "Granny says: 'Well butter my biscuit, here comes my little rascal.'",
+        "Hello dear... your timing is as good as cold tea."
+      ]},
+      { keys:['how are you','how r u','how are u','how ru','how you'], replies:[
+        "Doing well, dear! Better than your last excuse for studying.",
+        "Granny says: Eat well and stop wasting time.",
+        "Bless your heart, but you need to work harder!"
+      ]},
+      { keys:['i failed','i failed in my exam','failed in my exam','failed exam','i failed my exam','failed'], replies:[
+        "I told you to study! What were you doing? Sleeping?",
+        "Old granny knows your lazy habits too well.",
+        "Failure is just a lesson, but don't make it a habit!"
+      ]},
+      { keys:['i have an exam tomorrow','exam tomorrow','test tomorrow','tomorrow exam'], replies:[
+        "Exam tomorrow, eh? Show them how it's done, child!",
+        "Remember, calm mind is a sharp mind.",
+        "Grandma believes in you — go get that success!",
+        "Study well tonight, and make me proud!"
+      ]},
+      { keys:['i am hungry','im hungry','i.m hungry','ayinu','ayinu njan enthu venam','i am very hungry'], replies:[
+        "Ayinu? Njan enthu venam? Eat first, then talk.",
+        "You come here hungry every day, have you thought about cooking?",
+        "Granny says: Eat more veggies and less phone time!"
+      ]},
+      { keys:['sahichoo','sahichu','sahicho'], replies:[
+        "Sahichoo? Only when you finally clean your room!",
+        "Granny is surprised, but keep it up!",
+        "Maybe this is the start of a new you?"
+      ]},
+      { keys:['hairfall','hair fall','hairloss','hair loss','i have hairfall'], replies:[
+        "Hairfall? That's because you are too old to worry about such things!",
+        "Prayoyillai angeneyokke indavum (No use, these things happen!).",
+        "Take some rest, and stop pulling your hair out!"
+      ]},
+      { keys:['i am tired','im tired','tired','exhausted','sleepy'], replies:[
+        "Tired? Back in my day, tired meant working in the fields!",
+        "Rest is for the weak? Nope, rest is for the smart.",
+        "Take a nap and get back to work, youngster!"
+      ]},
+      { keys:['i need your help','help me','please help','can you help','need help'], replies:[
+        "I’m here to help, but you have to try too!",
+        "Granny’s advice: One step at a time.",
+        "You’ve got this, I’m rooting for you!"
+      ]},
+      { keys:['mobile','phone','whatsapp','youtube','instagram','social','scroll'], replies:[
+        "That phone is a distraction, put it down!",
+        "Stop scrolling and start doing something useful.",
+        "Granny says: Phones were simpler in my days."
+      ]},
+      { keys:['game','gaming','pubg','fortnite','freefire','minecraft'], replies:[
+        "Gaming is fine, but don't forget real life.",
+        "Granny says: You better score well in exams too!",
+        "Pause the game and come chat with Granny."
+      ]},
+      { keys:[], replies:[
+        "Ah… young people these days… brain empty.",
+        "My walking stick has more sense than you right now.",
+        "Go learn some patience and hard work, child."
+      ]}
+    ],
+
+    friend: [
+      { keys:['hi','hello','hey','greetings','good morning','good evening','good night'], replies:[
+        "Oh, you again? Didn't expect to hear from you so soon.",
+        "Hey! Ready to get roasted or do you want a hug first?",
+        "What’s up, troublemaker? Ready to mess up again?",
+        "Sup buddy, still alive after last weekend?"
+      ]},
+      { keys:['how are you','how r u','how are u','how ru','how you'], replies:[
+        "I'm good, unlike your last attempt at cooking.",
+        "Better than your WiFi speed!",
+        "Still waiting for you to level up, though."
+      ]},
+      { keys:['i failed','i failed in my exam','failed in my exam','failed exam','i failed my exam','failed'], replies:[
+        "Bro, maybe if you studied instead of sleeping!",
+        "Epic fail! But don’t worry, we still love you.",
+        "Netflix and chill took all your brain, huh?",
+        "Come on, you gotta try harder next time."
+      ]},
+      { keys:['i have an exam tomorrow','exam tomorrow','test tomorrow','tomorrow exam'], replies:[
+        "Exam tomorrow? Time to turn those books into trophies!",
+        "You got this, champ! Just don’t pull an all-nighter.",
+        "Knock that exam out of the park, buddy!",
+        "Focus now, celebrate later. You’re gonna ace it!"
+      ]},
+      { keys:['i am hungry','im hungry','i.m hungry','ayinu','ayinu njan enthu venam','i am very hungry'], replies:[
+        "Bro, raid the fridge before I do.",
+        "You hungry again? Eat something and stop complaining.",
+        "I swear, you’re eating for two!"
+      ]},
+      { keys:['sahichoo','sahichu','sahicho'], replies:[
+        "Sahichoo? Finally did something right?",
+        "About time! Did someone wake up from a nap?",
+        "Is this real life or just a glitch?"
+      ]},
+      { keys:['hairfall','hair fall','hairloss','hair loss','i have hairfall'], replies:[
+        "Hairfall? Stressing over exams or just getting old like me?",
+        "Maybe you need a new shampoo... or a new attitude.",
+        "Stop worrying, it'll grow back... hopefully."
+      ]},
+      { keys:['i am tired','im tired','tired','exhausted','sleepy'], replies:[
+        "Tired? Because walking to the fridge is exhausting?",
+        "Sleepy? You nap more than a cat.",
+        "Get up, lazybones!"
+      ]},
+      { keys:['i need your help','help me','please help','can you help','need help'], replies:[
+        "Sure, but only if you bring snacks.",
+        "I got you — but you owe me pizza.",
+        "Help is here, but so is the roasting!"
+      ]},
+      { keys:['mobile','phone','whatsapp','youtube','instagram','social','scroll'], replies:[
+        "Still scrolling? Your thumb deserves a medal.",
+        "Your phone battery lasts longer than your attention span.",
+        "Put down that phone and look alive!"
+      ]},
+      { keys:['game','gaming','pubg','fortnite','freefire','minecraft'], replies:[
+        "If life had respawns, you'd still be stuck in tutorial.",
+        "Gaming champ? More like procrastination pro.",
+        "Pause the game and adult for a minute."
+      ]},
+      { keys:[], replies:[
+        "Dude, that's some next-level nonsense right there.",
+        "You sure you’re not speaking in code?",
+        "Your logic needs a patch update."
+      ]}
+    ]
+  };
+
+  // Add mode CSS class & header update
+  function updateModeUI() {
+    chatContainer.classList.remove('mode-mom', 'mode-granny', 'mode-friend');
+    chatContainer.classList.add('mode-' + modeSelector.value);
+    headerTitle.textContent = `RoastO'Bot — ${capitalize(modeSelector.value)} Mode`;
+  }
+
+  // Capitalize first letter helper
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // Add message to chat
+  function addMsg(text, who='bot'){
+    const d = document.createElement('div');
+    d.className = 'msg ' + (who === 'me' ? 'user' : 'bot');
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = who === 'me' ? 'You' : capitalize(modeSelector.value);
+    const body = document.createElement('div');
+    body.innerHTML = text.replace(/\n/g,'<br>');
+    d.appendChild(meta);
+    d.appendChild(body);
+    messages.appendChild(d);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  // Find category by keywords
+  function findCategory(msg, mode){
+    const m = msg.toLowerCase();
+
+    // Special case for 'failed in exam' variations
+    if((m.includes('fail') || m.includes('failed')) && m.includes('exam')) {
+      return roastData[mode].find(cat => cat.keys.includes('i failed in my exam'));
+    }
+
+    for(const cat of roastData[mode]){
+      if(cat.keys.length === 0) continue;
+      for(const k of cat.keys){
+        if(k && m.includes(k)) return cat;
+      }
+    }
+    // fallback category
+    return roastData[mode].find(cat => cat.keys.length === 0);
+  }
+
+  // Generate reply based on message and mode
+  function replyTo(msg, mode){
+    const cat = findCategory(msg, mode);
+    if (!cat) return "Hmm, I don't have a response for that.";
+
+    // For 'i failed in my exam' special override for mom mode (to keep variety)
+    if(mode === 'mom'){
+      const low = msg.toLowerCase();
+      if((low.includes('fail') || low.includes('failed')) && low.includes('exam')){
+        const list = [
+          "I knew this was coming — your phone and late-night videos planned it well.",
+          "Of course you failed. Olympic-level laziness + zero revision = this result.",
+          "I told you so! Stop blaming everything except your own habits.",
+          "Next time, try studying — it's a wild idea, I know."
+        ];
+        return list[Math.floor(Math.random()*list.length)];
+      }
+    }
+
+    // Pick random reply from category replies
+    return cat.replies[Math.floor(Math.random()*cat.replies.length)];
+  }
+
+  // Send message handler
+  function sendMessage() {
+    const txt = input.value.trim();
+    if(!txt) return;
+    addMsg(txt, 'me');
+    input.value = '';
+    setTimeout(() => {
+      const mode = modeSelector.value;
+      addMsg(replyTo(txt, mode), 'bot');
+    }, 450);
+  }
+
+  // Event listeners
+  send.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter') {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  modeSelector.addEventListener('change', () => {
+    updateModeUI();
+    // Clear messages on mode switch
+    messages.innerHTML = '';
+    addMsg(`Hi! I'm RoastO'Bot — now in ${capitalize(modeSelector.value)} mode. Try typing something!`, 'bot');
+  });
+
+  // Initialize UI and welcome message
+  updateModeUI();
+  addMsg("Hi! I'm RoastO'Bot — I roast like a mom, granny, or friend, and I also help when you ask. Try 'I failed in my exam', 'I have an exam tomorrow', or 'I need your help'.", 'bot');
+})();
+</script>
+</body>
+</html>
